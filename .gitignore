@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+.env
+
+# Secrets
+*.pem
+*.p8
+*.key
+secrets/*
+!secrets/.gitkeep
+
+# IDEs
+.idea/
+.vscode/
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# Pytest
+.pytest_cache/
