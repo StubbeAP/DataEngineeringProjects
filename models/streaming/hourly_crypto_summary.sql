@@ -23,7 +23,9 @@ from trades
 
 {% if is_incremental() %}
     -- Reprocess current active hourly window
-    where trade_time >= (select coalesce(max(hourly_window), '1970-01-01'::timestamp_tz) from {{ this }})
+    where
+        trade_time
+        >= (select coalesce(max(hourly_window), '1970-01-01'::timestamp_tz) from {{ this }})
 {% endif %}
 
 group by 1, 2
