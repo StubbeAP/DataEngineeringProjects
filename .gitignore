@@ -12,6 +12,7 @@ ENV/
 *.pem
 *.p8
 *.key
+profiles.yml
 secrets/*
 !secrets/.gitkeep
 
@@ -23,6 +24,9 @@ secrets/*
 *.duckdb
 *.duckdb.wal
 
-# Pytest
-.pytest_cache/
+# dbt
 dbt_internal_packages/
+target/
+logs/
+.user.yml
+

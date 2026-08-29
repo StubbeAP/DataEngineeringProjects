@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: crypto_source
+    database: CRYPTO_DB
+    schema: PUBLIC
+    tables:
+      - name: raw_crypto_trades
+        description: "Raw trade stream ingested from Coinbase via Kafka Connect into Snowflake."

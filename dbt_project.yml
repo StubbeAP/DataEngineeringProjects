@@ -15,10 +15,21 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
-# Configuring models
+# Configuring models by folder and explicit model names
 models:
   crypto_snowflake_pipeline:
     staging:
       +materialized: view
+      stg_crypto_trades:
+        +materialized: view
     marts:
-      +materialized: table
+      +materialized: incremental
+      +incremental_strategy: merge
+      +unique_key: trade_id
+      fct_crypto_trades:
+        +materialized: incremental
+    streaming:
+      +materialized: incremental
+      +incremental_strategy: append
+      hourly_crypto_summary:
+        +materialized: incremental
