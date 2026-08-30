@@ -38,7 +38,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              args:
+              arguments:
                 values: ['buy', 'sell']
       
       - name: trade_time
