@@ -21,4 +21,4 @@ from staging
     -- Filter to process only trade records newer than the max trade_time currently in Snowflake
     where
         trade_time > (select coalesce(max(trade_time), '1970-01-01'::timestamp_tz) from {{ this }})
-{% endif %}
+{% endif %};
