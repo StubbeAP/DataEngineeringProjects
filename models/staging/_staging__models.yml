@@ -38,7 +38,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['buy', 'sell']
+              args:
+                values: ['buy', 'sell']
       
       - name: trade_time
         description: "The timestamp when the trade executed on the exchange."
