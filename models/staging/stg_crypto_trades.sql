@@ -16,6 +16,7 @@ renamed as (
         record_content:trade_time::timestamp_tz as trade_time,
         record_content:ingestion_time::timestamp_tz as ingestion_time
     from source
+    qualify row_number() over (partition by trade_id order by ingestion_time desc) = 1
 
 )
 

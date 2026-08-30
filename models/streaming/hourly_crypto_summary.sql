@@ -1,8 +1,3 @@
-{{ config(
-    materialized='incremental',
-    unique_key=['hourly_window', 'product_id'],
-    incremental_strategy='merge'
-) }}
 
 -- Incremental aggregate model for hourly trade volume and metrics
 with trades as (

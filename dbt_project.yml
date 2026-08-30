@@ -33,3 +33,7 @@ models:
       +incremental_strategy: append
       hourly_crypto_summary:
         +materialized: incremental
+        +incremental_strategy: merge
+        +unique_key:
+          - hourly_window
+          - product_id

@@ -1,8 +1,3 @@
-{{ config(
-    materialized='incremental',
-    unique_key='trade_id',
-    incremental_strategy='merge'
-) }}
 
 -- Incremental Mart model for crypto trade analytics
 with staging as (

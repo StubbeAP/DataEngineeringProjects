@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: hourly_crypto_summary
+    description: "Streaming aggregate model for hourly trade volume and metrics."
+    columns:
+      - name: hourly_window
+        description: "The hour bucket for the summary."
+        tests:
+          - not_null
+      
+      - name: product_id
+        description: "The cryptocurrency trading pair."
+        tests:
+          - not_null
+          
+      - name: total_trades
+        description: "The total number of trades in this hour."
+        tests:
+          - not_null
+          
+      - name: total_usd_volume
+        description: "The total volume traded in USD."
+        tests:
+          - not_null
+
+unit_tests:
+  - name: test_hourly_crypto_summary_aggregation
+    description: "Ensure hourly aggregation correctly sums trades and volumes"
+    model: hourly_crypto_summary
+    overrides:
+      macros:
+        is_incremental: false
+    given:
+      - input: ref('stg_crypto_trades')
+        rows:
+          - {trade_id: 1, product_id: 'BTC-USD', price: 50000.0, size: 1.0, side: 'buy', trade_time: '2024-01-01 12:10:00', ingestion_time: '2024-01-01 12:10:01'}
+          - {trade_id: 2, product_id: 'BTC-USD', price: 52000.0, size: 2.0, side: 'sell', trade_time: '2024-01-01 12:20:00', ingestion_time: '2024-01-01 12:20:01'}
+          - {trade_id: 3, product_id: 'BTC-USD', price: 60000.0, size: 1.0, side: 'buy', trade_time: '2024-01-01 13:05:00', ingestion_time: '2024-01-01 13:05:01'}
+    expect:
+      rows:
+        - {hourly_window: '2024-01-01 12:00:00', product_id: 'BTC-USD', total_trades: 2, total_crypto_volume: 3.0, total_usd_volume: 154000.0, avg_price: 51000.0}
+        - {hourly_window: '2024-01-01 13:00:00', product_id: 'BTC-USD', total_trades: 1, total_crypto_volume: 1.0, total_usd_volume: 60000.0, avg_price: 60000.0}

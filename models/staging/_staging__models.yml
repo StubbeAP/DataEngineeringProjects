@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: stg_crypto_trades
+    description: "Staging model that parses the raw JSON trade stream from Kafka."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: trade_id
+        description: "Unique identifier for the trade provided by Coinbase."
+        data_type: number
+        tests:
+          - unique
+          - not_null
+      
+      - name: product_id
+        description: "The cryptocurrency trading pair (e.g., BTC-USD)."
+        data_type: varchar
+        tests:
+          - not_null
+      
+      - name: price
+        description: "The price at which the trade executed."
+        data_type: float
+        tests:
+          - not_null
+      
+      - name: size
+        description: "The size (volume) of the trade in crypto."
+        data_type: float
+        tests:
+          - not_null
+      
+      - name: side
+        description: "Whether the trade was a buy or sell order."
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['buy', 'sell']
+      
+      - name: trade_time
+        description: "The timestamp when the trade executed on the exchange."
+        data_type: timestamp_tz
+        tests:
+          - not_null
+      
+      - name: ingestion_time
+        description: "The timestamp when the message was ingested by the producer."
+        data_type: timestamp_tz
+        tests:
+          - not_null
