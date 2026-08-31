@@ -4,6 +4,11 @@ models:
   - name: dim_products
     description: "Dimension table for cryptocurrency trading products."
     columns:
+      - name: product_key
+        description: "Surrogate key for the product (MD5 hash)."
+        data_tests:
+          - unique
+          - not_null
       - name: product_id
         description: "The primary key and natural key of the product."
         data_tests:

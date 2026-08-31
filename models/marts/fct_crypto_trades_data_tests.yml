@@ -10,13 +10,18 @@ models:
           - unique
           - not_null
       
-      - name: product_id
+      - name: product_key
         description: "Foreign key to dim_products."
         data_tests:
           - not_null
           - relationships:
               to: ref('dim_products')
-              field: product_id
+              field: product_key
+              
+      - name: product_id
+        description: "Natural key."
+        data_tests:
+          - not_null
               
       - name: trade_date_key
         description: "Foreign key to dim_date."

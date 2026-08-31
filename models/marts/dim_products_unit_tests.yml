@@ -13,5 +13,5 @@ unit_tests:
           - {trade_id: 4, product_id: null, price: 0.05, size: 10.0, side: 'buy', trade_time: '2024-01-01 13:00:00', ingestion_time: '2024-01-01 13:00:01'}
     expect:
       rows:
-        - {product_id: 'BTC-USD', base_currency: 'BTC', quote_currency: 'USD', is_fiat_quote: true}
-        - {product_id: 'ETH-BTC', base_currency: 'ETH', quote_currency: 'BTC', is_fiat_quote: false}
+        - {product_key: '743977791589f2708c45b7f1a7345b3a', product_id: 'BTC-USD', base_currency: 'BTC', quote_currency: 'USD', is_fiat_quote: true}
+        - {product_key: 'ddef6108f6c7546be4e12f2c3cc21273', product_id: 'ETH-BTC', base_currency: 'ETH', quote_currency: 'BTC', is_fiat_quote: false}

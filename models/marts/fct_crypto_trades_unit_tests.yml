@@ -13,4 +13,4 @@ unit_tests:
           - {trade_id: 1, product_id: 'BTC-USD', price: 50000.0, size: 2.0, side: 'buy', trade_time: '2024-01-01 12:00:00', ingestion_time: '2024-01-01 12:00:01'}
     expect:
       rows:
-        - {trade_id: 1, usd_volume: 100000.0}
+        - {trade_id: 1, product_key: '743977791589f2708c45b7f1a7345b3a', usd_volume: 100000.0}

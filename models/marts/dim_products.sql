@@ -6,6 +6,7 @@ with unique_products as (
 )
 
 select
+    md5(product_id) as product_key,
     product_id,
     split_part(product_id, '-', 1) as base_currency,
     split_part(product_id, '-', 2) as quote_currency,
