@@ -1,0 +1,16 @@
+version: 2
+
+unit_tests:
+  - name: test_fct_crypto_trades_usd_volume_calculation
+    description: "Ensure usd_volume is correctly calculated as price * size"
+    model: fct_crypto_trades
+    overrides:
+      macros:
+        is_incremental: false
+    given:
+      - input: ref('stg_crypto_trades')
+        rows:
+          - {trade_id: 1, product_id: 'BTC-USD', price: 50000.0, size: 2.0, side: 'buy', trade_time: '2024-01-01 12:00:00', ingestion_time: '2024-01-01 12:00:01'}
+    expect:
+      rows:
+        - {trade_id: 1, product_key: '743977791589f2708c45b7f1a7345b3a', usd_volume: 100000.0}

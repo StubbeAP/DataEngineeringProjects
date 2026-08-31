@@ -8,7 +8,9 @@ with staging as (
 
 select
     trade_id,
+    md5(product_id) as product_key,
     product_id,
+    to_number(to_char(trade_time, 'YYYYMMDD')) as trade_date_key,
     side,
     price,
     size,

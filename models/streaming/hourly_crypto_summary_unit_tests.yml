@@ -1,29 +1,5 @@
 version: 2
 
-models:
-  - name: hourly_crypto_summary
-    description: "Streaming aggregate model for hourly trade volume and metrics."
-    columns:
-      - name: hourly_window
-        description: "The hour bucket for the summary."
-        tests:
-          - not_null
-      
-      - name: product_id
-        description: "The cryptocurrency trading pair."
-        tests:
-          - not_null
-          
-      - name: total_trades
-        description: "The total number of trades in this hour."
-        tests:
-          - not_null
-          
-      - name: total_usd_volume
-        description: "The total volume traded in USD."
-        tests:
-          - not_null
-
 unit_tests:
   - name: test_hourly_crypto_summary_aggregation
     description: "Ensure hourly aggregation correctly sums trades and volumes"
