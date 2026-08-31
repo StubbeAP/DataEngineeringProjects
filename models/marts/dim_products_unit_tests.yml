@@ -1,0 +1,17 @@
+version: 2
+
+unit_tests:
+  - name: test_dim_products_logic
+    description: "Ensure dim_products correctly splits currency pairs and flags fiat quotes, and removes duplicates."
+    model: dim_products
+    given:
+      - input: ref('stg_crypto_trades')
+        rows:
+          - {trade_id: 1, product_id: 'BTC-USD', price: 50000.0, size: 1.0, side: 'buy', trade_time: '2024-01-01 12:10:00', ingestion_time: '2024-01-01 12:10:01'}
+          - {trade_id: 2, product_id: 'BTC-USD', price: 51000.0, size: 2.0, side: 'sell', trade_time: '2024-01-01 12:20:00', ingestion_time: '2024-01-01 12:20:01'}
+          - {trade_id: 3, product_id: 'ETH-BTC', price: 0.05, size: 10.0, side: 'buy', trade_time: '2024-01-01 13:00:00', ingestion_time: '2024-01-01 13:00:01'}
+          - {trade_id: 4, product_id: null, price: 0.05, size: 10.0, side: 'buy', trade_time: '2024-01-01 13:00:00', ingestion_time: '2024-01-01 13:00:01'}
+    expect:
+      rows:
+        - {product_id: 'BTC-USD', base_currency: 'BTC', quote_currency: 'USD', is_fiat_quote: true}
+        - {product_id: 'ETH-BTC', base_currency: 'ETH', quote_currency: 'BTC', is_fiat_quote: false}

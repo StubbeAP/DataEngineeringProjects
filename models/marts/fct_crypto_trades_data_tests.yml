@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: fct_crypto_trades
+    description: "Fact model for crypto trades containing calculated fields like USD volume."
+    columns:
+      - name: trade_id
+        description: "Unique identifier for the trade."
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: product_id
+        description: "Foreign key to dim_products."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_id
+              
+      - name: trade_date_key
+        description: "Foreign key to dim_date."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+          
+      - name: usd_volume
+        description: "The total volume of the trade in USD."
+        data_tests:
+          - not_null

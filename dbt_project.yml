@@ -26,6 +26,10 @@ models:
       +materialized: incremental
       +incremental_strategy: merge
       +unique_key: trade_id
+      dim_products:
+        +materialized: table
+      dim_date:
+        +materialized: table
       fct_crypto_trades:
         +materialized: incremental
     streaming:

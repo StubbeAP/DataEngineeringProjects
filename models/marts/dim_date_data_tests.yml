@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: "Calendar date dimension table."
+    columns:
+      - name: date_key
+        description: "Primary key in YYYYMMDD integer format."
+        data_tests:
+          - unique
+          - not_null
+      - name: date_actual
+        description: "The actual date."

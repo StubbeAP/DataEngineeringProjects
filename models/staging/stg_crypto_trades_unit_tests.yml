@@ -1,0 +1,19 @@
+version: 2
+
+unit_tests:
+  - name: test_stg_crypto_trades_deduplication
+    description: "Ensure stg_crypto_trades correctly removes duplicate trades keeping the one with the latest ingestion_time."
+    model: stg_crypto_trades
+    given:
+      - input: source('crypto_source', 'raw_crypto_trades')
+        format: sql
+        rows: |
+          select parse_json('{"trade_id": 1, "product_id": "BTC-USD", "price": 50000.0, "size": 1.0, "side": "buy", "trade_time": "2024-01-01 12:00:00", "ingestion_time": "2024-01-01 12:00:01"}') as record_content
+          union all
+          select parse_json('{"trade_id": 1, "product_id": "BTC-USD", "price": 50000.0, "size": 1.0, "side": "buy", "trade_time": "2024-01-01 12:00:00", "ingestion_time": "2024-01-01 12:00:05"}') as record_content
+          union all
+          select parse_json('{"trade_id": 2, "product_id": "ETH-USD", "price": 2000.0, "size": 5.0, "side": "sell", "trade_time": "2024-01-01 12:01:00", "ingestion_time": "2024-01-01 12:01:01"}') as record_content
+    expect:
+      rows:
+        - {trade_id: 1, product_id: 'BTC-USD', price: 50000.0, size: 1.0, side: 'buy', trade_time: '2024-01-01 12:00:00', ingestion_time: '2024-01-01 12:00:05'}
+        - {trade_id: 2, product_id: 'ETH-USD', price: 2000.0, size: 5.0, side: 'sell', trade_time: '2024-01-01 12:01:00', ingestion_time: '2024-01-01 12:01:01'}
