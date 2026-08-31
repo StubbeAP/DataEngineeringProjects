@@ -6,22 +6,22 @@ models:
     columns:
       - name: hourly_window
         description: "The hour bucket for the summary."
-        tests:
+        data_tests:
           - not_null
       
       - name: product_id
         description: "The cryptocurrency trading pair."
-        tests:
+        data_tests:
           - not_null
           
       - name: total_trades
         description: "The total number of trades in this hour."
-        tests:
+        data_tests:
           - not_null
           
       - name: total_usd_volume
         description: "The total volume traded in USD."
-        tests:
+        data_tests:
           - not_null
 
 unit_tests:

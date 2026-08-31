@@ -118,6 +118,16 @@ To stop the live streams:
   pkill -f "src/producer|src/consumer"
   ```
 
+## dbt Documentation
+
+To generate and serve the interactive dbt documentation locally (using port 8081 to avoid conflicting with the Kafka UI on 8080):
+
+```bash
+dbt docs generate
+dbt docs serve --port 8081 --no-browser
+```
+After running, manually navigate to `http://localhost:8081` in your browser to view the lineage graphs and model details.
+
 ## Command Reference
 
 | Command | Description |
