@@ -1,4 +1,4 @@
-.PHONY: up down airflow-up airflow-down airflow-logs producer consumer extract-api query register-connector test lint clean dbt-run dbt-test kill-airflow
+.PHONY: up down airflow-up airflow-down airflow-logs producer consumer extract-api register-connector test lint clean dbt-run dbt-test kill-airflow
 
 DOCKER_COMPOSE ?= docker compose
 
@@ -31,9 +31,6 @@ consumer:
 
 extract-api:
 	python src/ingestion/api_extractor.py
-
-query:
-	python query_duckdb.py
 
 register-connector:
 	curl -X POST -H "Content-Type: application/json" --data @config/kafka_connect_snowflake.json http://localhost:8083/connectors
