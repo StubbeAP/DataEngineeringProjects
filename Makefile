@@ -1,15 +1,20 @@
-.PHONY: up down airflow-up airflow-down airflow-logs producer consumer extract-api register-connector test lint clean dbt-run dbt-test kill-airflow
+.PHONY: up down kafka-up kafka-down airflow-up airflow-down airflow-logs producer consumer extract-api register-connector test lint clean dbt-run dbt-test kill-airflow
 
 DOCKER_COMPOSE ?= docker compose
 
 # ---------------------------------------------------------------------------
 # Infrastructure & Containers
 # ---------------------------------------------------------------------------
-up:
-	$(DOCKER_COMPOSE) up -d
+up: kafka-up airflow-up
 
 down:
 	$(DOCKER_COMPOSE) down -v
+
+kafka-up:
+	$(DOCKER_COMPOSE) up -d kafka kafka-connect kafka-ui
+
+kafka-down:
+	$(DOCKER_COMPOSE) stop kafka-ui kafka-connect kafka
 
 airflow-up:
 	$(DOCKER_COMPOSE) up -d postgres airflow-init airflow-webserver airflow-scheduler
