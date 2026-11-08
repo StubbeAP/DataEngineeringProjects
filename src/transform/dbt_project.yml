@@ -15,14 +15,14 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
-# Configuring models by Medallion architecture (bronze, silver, gold)
+# Configuring models by Medallion architecture (1_bronze, 2_silver, 3_gold)
 models:
   crypto_snowflake_pipeline:
-    bronze:
+    1_bronze:
       +materialized: view
       stg_crypto_trades:
         +materialized: view
-    silver:
+    2_silver:
       +materialized: incremental
       +incremental_strategy: merge
       +on_schema_change: fail
@@ -34,7 +34,7 @@ models:
       fct_crypto_trades:
         +materialized: incremental
         +on_schema_change: fail
-    gold:
+    3_gold:
       +materialized: incremental
       hourly_crypto_summary:
         +materialized: incremental
