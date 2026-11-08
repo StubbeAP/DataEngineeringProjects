@@ -1,143 +1,174 @@
 # Crypto Kafka-Snowflake Streaming Pipeline
 
-An end-to-end, production-grade streaming pipeline that ingests real-time cryptocurrency trade data from the Coinbase WebSocket API, buffers and partitions it through Apache Kafka, and sinks the data into Snowflake using Kafka Connect and key-pair authentication.
+An end-to-end, production-grade streaming and analytics pipeline that ingests real-time cryptocurrency trade data from the Coinbase WebSocket and REST APIs, buffers and partitions it through Apache Kafka, sinks the data into Snowflake and DuckDB, and orchestrates dimensional modeling and data quality gates using **Apache Airflow** and **Astronomer Cosmos** (replacing dbt Cloud).
 
-## Architecture
+---
+
+## Architecture Overview
 
 ```mermaid
-graph LR
-    A[Coinbase WebSocket] -->|Python Producer| B(Kafka Topic: raw-crypto-trades)
+graph TD
+    A[Coinbase WebSocket / REST API] -->|Python Ingestion| B(Kafka Topic: raw-crypto-trades)
     B --> C[Kafka Connect]
-    C -->|Snowflake Connector| D[(Snowflake RAW_CRYPTO_TRADES)]
-    B --> E[DuckDB Local Fallback]
+    C -->|Snowflake Connector| D[(Snowflake Bronze: RAW_CRYPTO_TRADES)]
+    B -->|Fallback Consumer| E[(DuckDB Bronze: crypto_trades)]
+    
+    subgraph Airflow & Cosmos Orchestrator
+        F[Airflow Scheduler] -->|Hourly Trigger| G[Cosmos DbtTaskGroup]
+        G --> H[Staging: stg_crypto_trades]
+        H --> I[Marts: dim_products & dim_date]
+        H --> J[Marts: fct_crypto_trades]
+        J --> K[Streaming: hourly_crypto_summary]
+        K --> L[Automated Data Quality Gates]
+    end
+    
+    D -.->|Extract & Transform| G
 ```
 
-## Prerequisites
-- Docker & Docker Compose
+---
+
+## Project Structure
+
+This repository follows standard modular enterprise data engineering practices:
+
+```text
+├── README.md                      # Project overview, architecture, runbooks, and SLAs
+├── .env.example                   # Environment configuration template
+├── .gitignore                     # Git ignore rules for credentials, caches, and artifacts
+├── docker-compose.yml             # Single-command stack: Airflow, Postgres, Kafka, Kafka Connect, Kafka UI
+├── Dockerfile                     # Custom Airflow image with dbt-snowflake, Cosmos, and ingestion dependencies
+├── pyproject.toml                 # Modern Python packaging and linting configurations
+├── Makefile                       # Unified CLI commands for running and testing the stack
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                 # Lint (ruff, sqlfluff), unit tests (pytest), and dbt validation on PR
+│       └── deploy.yml             # Container build and deployment validation on merge to main
+└── src/
+    ├── ingestion/                 # Data extraction and streaming modules
+    │   ├── kafka_producer.py      # Kafka producer with deliver reports and serialization
+    │   ├── websocket_client.py    # Coinbase WebSocket listener for live trade matches
+    │   ├── api_extractor.py       # Idempotent REST API extractor for backfill & historical batches
+    │   ├── kafka_consumer.py      # DuckDB bronze consumer (idempotent ON CONFLICT)
+    │   ├── config.py              # Configuration loader
+    │   ├── logger.py              # Centralized logging format
+    │   └── main.py                # Live producer entrypoint
+    ├── dags/                      # Airflow DAG definitions
+    │   ├── crypto_analytics_dag.py# Hourly pipeline using Cosmos to orchestrate dbt models & tests
+    │   └── backfill_dag.py        # Parameterized historical backfill pipeline
+    ├── transform/                 # Self-contained dbt project
+    │   ├── dbt_project.yml        # dbt project settings and model configurations
+    │   ├── profiles.yml           # Snowflake target connection profiles
+    │   ├── .sqlfluff              # SQL linting rules for Snowflake dialect
+    │   ├── models/
+    │   │   ├── staging/           # View layer: stg_crypto_trades
+    │   │   ├── intermediate/      # Ephemeral/view staging logic
+    │   │   ├── marts/             # Business models: dim_products, dim_date, fct_crypto_trades
+    │   │   └── streaming/         # Real-time rollup: hourly_crypto_summary
+    │   ├── macros/                # Custom SQL macros
+    │   ├── seeds/                 # Reference seed data
+    │   └── tests/                 # dbt singular and generic tests
+    ├── tests/                     # Unit and data quality tests
+    │   ├── test_payload_schema.py # Pydantic schema validation tests
+    │   ├── test_producer.py       # Kafka producer mocking and client tests
+    │   ├── test_transforms.py     # Python unit tests for transformation logic
+    │   └── data_quality.yml       # Automated data quality checks suite
+    └── infra/                     # Infrastructure as Code (Terraform)
+        ├── main.tf                # Snowflake warehouse, database, schema, and role definitions
+        └── variables.tf           # Terraform input variables
+```
+
+---
+
+## Services & Ports
+
+| Service | Container Name | Port | Description |
+| :--- | :--- | :--- | :--- |
+| **Airflow Webserver** | `crypto-airflow-webserver` | [http://localhost:8085](http://localhost:8085) | Airflow UI (`admin` / `admin`) |
+| **Kafka UI** | `crypto-kafka-ui` | [http://localhost:8080](http://localhost:8080) | Topic inspection, consumer groups, connector status |
+| **Kafka Broker** | `crypto-kafka` | `localhost:29092` / `kafka:9092` | KRaft-mode Kafka cluster |
+| **Kafka Connect** | `crypto-kafka-connect` | [http://localhost:8083](http://localhost:8083) | Snowflake Sink Connector runtime |
+| **Postgres** | `crypto-postgres` | `localhost:5432` | Airflow metadata database |
+
+---
+
+## Quickstart Guide
+
+### 1. Prerequisites
+- Docker & Docker Compose (v2.20+)
 - Python 3.9+
-- Snowflake Account (optional, for cloud sync)
 
-## Setup
-
-1. **Create & Activate Virtual Environment:**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-2. **Install Python Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Start Infrastructure:**
-   ```bash
-   make up
-   ```
-   *This starts Kafka (KRaft), Kafka Connect (with Snowflake plugin), and Kafka-UI on port 8080.*
-
-4. **Snowflake Configuration:**
-   - Execute the SQL scripts in `sql/` starting with `01_setup_snowflake_roles_and_wh.sql`.
-   - Generate RSA keys:
-     ```bash
-     openssl genrsa -out secrets/rsa_key.pem 2048
-     openssl rsa -in secrets/rsa_key.pem -pubout -out secrets/rsa_key.pub
-     openssl pkcs8 -topk8 -inform PEM -outform PEM -in secrets/rsa_key.pem -out secrets/rsa_key.p8 -nocrypt
-     ```
-   - Update `config/kafka_connect_snowflake.json` with your Snowflake account details and the one-line version of your `rsa_key.p8`.
-   - Apply the public key to your Snowflake user.
-
-5. **Register Kafka Connector:**
-   ```bash
-   make register-connector
-   ```
-
-## Running the Pipeline
-
-1. **Start the Producer:**
-   ```bash
-   make producer
-   ```
-
-2. **Verify in Snowflake:**
-   - Check the `RAW_CRYPTO_TRADES` table.
-   - Run the views created in `sql/03_analytics_views.sql`.
-
-## Local Testing (No Snowflake)
-
-If you do not have a Snowflake account, you can test the pipeline locally using DuckDB:
-
-1. **Start infrastructure:**
-   ```bash
-   make up
-   ```
-2. **Start the producer (Terminal 1):**
-   ```bash
-   make producer
-   ```
-3. **Start the local DuckDB consumer (Terminal 2):**
-   ```bash
-   make consumer
-   ```
-
-This creates `crypto_trades.duckdb` and populates real-time trades.
-
-### Querying DuckDB Tables
-
-**Option 1: Built-in Makefile Command (Easiest)**
-Run directly in your terminal:
+### 2. Environment Setup
 ```bash
-make query
+cp .env.example .env
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-**Option 2: Terminal One-Liner**
+### 3. Launch the Stack
+Run the entire infrastructure (Kafka, Kafka Connect, Kafka UI, Postgres, Airflow) with one command:
 ```bash
-python3 -c "import duckdb; conn = duckdb.connect('crypto_trades.duckdb'); print(conn.execute('SELECT * FROM crypto_trades ORDER BY trade_time DESC LIMIT 10').df())"
+make up
 ```
 
-**Option 3: Interactive Python Shell**
-1. Type `python3` in your terminal to open Python mode:
-   ```bash
-   python3
-   ```
-2. Paste the Python code into the `>>>` prompt:
-   ```python
-   import duckdb
+Wait ~30 seconds for the containers to initialize, then access:
+- **Airflow Webserver**: [http://localhost:8085](http://localhost:8085) (Username: `admin`, Password: `admin`)
+- **Kafka UI**: [http://localhost:8080](http://localhost:8080)
 
-   conn = duckdb.connect("crypto_trades.duckdb")
-   df = conn.execute("SELECT * FROM crypto_trades ORDER BY trade_time DESC LIMIT 10").df()
-   print(df)
-   ```
-
-### Stopping Producer & Consumer
-
-To stop the live streams:
-- Press **`Ctrl + C`** in the active terminal window.
-- Or run the following command from any terminal:
-  ```bash
-  pkill -f "src/producer|src/consumer"
-  ```
-
-## dbt Documentation
-
-To generate and serve the interactive dbt documentation locally (using port 8081 to avoid conflicting with the Kafka UI on 8080):
-
+### 4. Start Streaming Ingestion
+In a new terminal:
 ```bash
-dbt docs generate
-dbt docs serve --port 8081 --no-browser
+make producer
 ```
-After running, manually navigate to `http://localhost:8081` in your browser to view the lineage graphs and model details.
+To run the local DuckDB fallback consumer concurrently:
+```bash
+make consumer
+```
 
-## Command Reference
+Or run an idempotent REST API batch extraction:
+```bash
+make extract-api
+```
 
-| Command | Description |
-| :--- | :--- |
-| `make up` | Start Kafka, Kafka Connect, and Kafka UI in Docker |
-| `make down` | Stop and remove all Docker containers and volumes |
-| `make producer` | Start Coinbase WebSocket producer streaming to Kafka |
-| `make consumer` | Start local DuckDB consumer |
-| `make query` | Query trade summary and latest 10 trades from DuckDB |
-| `make register-connector` | Register Snowflake Kafka Connector |
-| `make test-local` | Run unit tests with pytest |
-| `make clean` | Remove local DuckDB files and `__pycache__` artifacts |
+### 5. Running & Testing Transformations
+Trigger dbt transformations directly or let Airflow schedule them:
+```bash
+make dbt-run
+make dbt-test
+```
 
+Run Python unit and schema tests:
+```bash
+make test
+```
+
+Lint SQL models:
+```bash
+make lint
+```
+
+---
+
+## Airflow Orchestration (Cosmos)
+
+Instead of relying on external SaaS scheduling (dbt Cloud), transformations are orchestrated locally or on Kubernetes using **Astronomer Cosmos**:
+- **Native Task Mapping**: Each dbt model (`stg_crypto_trades`, `dim_products`, `dim_date`, `fct_crypto_trades`, `hourly_crypto_summary`) is rendered as an independent node in the Airflow DAG graph.
+- **Granular Retries & Logs**: Failed models can be retried individually without re-running the entire project.
+- **Embedded Testing**: Data tests are executed after each layer (`TestBehavior.AFTER_EACH`).
+- **Backfill Capability**: Use `backfill_dag` from the Airflow UI to reprocess custom date ranges with custom flags.
+
+# kill all processes
+make kill-airflow
+
+# Startup airflow http://localhost:8088
+make airflow-up
+
+
+# View live logs from webserver & scheduler
+make airflow-logs
+
+# Stop Airflow containers cleanly
+make airflow-down
+
+# Stop everything including Kafka & Postgres
+make down

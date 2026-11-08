@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: hourly_crypto_summary
+    description: "Streaming aggregate model for hourly trade volume and metrics."
+    config:
+      contract:
+        enforced: true
+      on_schema_change: fail
+    columns:
+      - name: hourly_window
+        description: "The hour bucket for the summary."
+        data_type: timestamp_tz
+        data_tests:
+          - not_null
+      
+      - name: product_id
+        description: "The cryptocurrency trading pair."
+        data_type: varchar
+        data_tests:
+          - not_null
+          
+      - name: total_trades
+        description: "The total number of trades in this hour."
+        data_type: number
+        data_tests:
+          - not_null
+          
+      - name: total_crypto_volume
+        description: "Total crypto token volume traded in this hour."
+        data_type: float
+        data_tests:
+          - not_null
+
+      - name: total_usd_volume
+        description: "The total volume traded in USD."
+        data_type: float
+        data_tests:
+          - not_null
+
+      - name: avg_price
+        description: "The average trade execution price in this hour."
+        data_type: float
+        data_tests:
+          - not_null
+
+      - name: last_ingested_at
+        description: "Max ingestion timestamp in the bucket."
+        data_type: timestamp_tz
+        data_tests:
+          - not_null

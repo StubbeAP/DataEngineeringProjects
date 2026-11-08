@@ -7,12 +7,16 @@ venv/
 env/
 ENV/
 .env
+*.egg-info/
+dist/
+build/
 
-# Secrets
+# Secrets & Credentials
 *.pem
 *.p8
 *.key
 profiles.yml
+src/transform/profiles.yml
 secrets/*
 !secrets/.gitkeep
 
@@ -27,6 +31,21 @@ secrets/*
 # dbt
 dbt_internal_packages/
 target/
+src/transform/target/
+src/transform/dbt_packages/
 logs/
 .user.yml
 
+# Airflow
+airflow.db
+airflow.cfg
+webserver_config.py
+.astro/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl

@@ -1,0 +1,32 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    name: Build Container & Deploy Orchestrator
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Airflow & Transformation Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: crypto-pipeline-airflow:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Validate Deployment Configuration
+        run: |
+          docker compose config --quiet
+          echo "Docker compose configuration is valid for deployment."

@@ -1,4 +1,7 @@
 services:
+  # =========================================================================
+  # KAFKA STREAMING INFRASTRUCTURE
+  # =========================================================================
   kafka:
     image: apache/kafka:3.7.0
     container_name: crypto-kafka
@@ -80,3 +83,127 @@ services:
     depends_on:
       kafka-connect:
         condition: service_healthy
+
+  # =========================================================================
+  # AIRFLOW ORCHESTRATION INFRASTRUCTURE (LOCALEXECUTOR)
+  # =========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: crypto-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dataengineeringprojects-airflow:latest
+    container_name: crypto-airflow-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        airflow db migrate && \
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com || true
+
+  airflow-webserver:
+    image: dataengineeringprojects-airflow:latest
+    container_name: crypto-airflow-webserver
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8088:8080"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+      DBT_PROJECT_DIR: /opt/airflow/transform
+      DBT_PROFILES_DIR: /opt/airflow/transform
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT:-dummy_account.region.aws}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER:-KAFKA_CONNECTOR_USER}
+      SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE:-KAFKA_CONNECTOR_ROLE}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-CRYPTO_WH}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-CRYPTO_DB}
+      SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-PUBLIC}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD:-}
+      SNOWFLAKE_PRIVATE_KEY_PATH: ${SNOWFLAKE_PRIVATE_KEY_PATH:-}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${SNOWFLAKE_PRIVATE_KEY_PASSPHRASE:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/transform:/opt/airflow/transform
+      - ./src:/opt/airflow/src
+      - ./secrets:/secrets:ro
+      - ./logs:/opt/airflow/logs
+    command: airflow webserver
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  airflow-scheduler:
+    image: dataengineeringprojects-airflow:latest
+    container_name: crypto-airflow-scheduler
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      DBT_PROJECT_DIR: /opt/airflow/transform
+      DBT_PROFILES_DIR: /opt/airflow/transform
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT:-dummy_account.region.aws}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER:-KAFKA_CONNECTOR_USER}
+      SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE:-KAFKA_CONNECTOR_ROLE}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-CRYPTO_WH}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-CRYPTO_DB}
+      SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-PUBLIC}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD:-}
+      SNOWFLAKE_PRIVATE_KEY_PATH: ${SNOWFLAKE_PRIVATE_KEY_PATH:-}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${SNOWFLAKE_PRIVATE_KEY_PASSPHRASE:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/transform:/opt/airflow/transform
+      - ./src:/opt/airflow/src
+      - ./secrets:/secrets:ro
+      - ./logs:/opt/airflow/logs
+    command: airflow scheduler
+
+volumes:
+  postgres-db-volume:

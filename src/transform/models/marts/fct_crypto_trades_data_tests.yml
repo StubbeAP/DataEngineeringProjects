@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: fct_crypto_trades
+    description: "Fact model for crypto trades containing calculated fields like USD volume."
+    config:
+      contract:
+        enforced: true
+      on_schema_change: fail
+    columns:
+      - name: trade_id
+        description: "Unique identifier for the trade."
+        data_type: number
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: product_key
+        description: "Foreign key to dim_products."
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_key
+              
+      - name: product_id
+        description: "Natural key."
+        data_type: varchar
+        data_tests:
+          - not_null
+              
+      - name: trade_date_key
+        description: "Foreign key to dim_date."
+        data_type: number
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+      - name: side
+        description: "Trade execution side (buy or sell)."
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['buy', 'sell']
+
+      - name: price
+        description: "The execution price of the trade."
+        data_type: float
+        data_tests:
+          - not_null
+
+      - name: size
+        description: "The trade size / quantity."
+        data_type: float
+        data_tests:
+          - not_null
+
+      - name: trade_time
+        description: "The exchange timestamp for trade execution."
+        data_type: timestamp_tz
+        data_tests:
+          - not_null
+
+      - name: ingestion_time
+        description: "The pipeline ingestion timestamp."
+        data_type: timestamp_tz
+        data_tests:
+          - not_null
+          
+      - name: usd_volume
+        description: "The total volume of the trade in USD (price * size)."
+        data_type: float
+        data_tests:
+          - not_null

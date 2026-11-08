@@ -3,20 +3,34 @@ version: 2
 models:
   - name: dim_products
     description: "Dimension table for cryptocurrency trading products."
+    config:
+      contract:
+        enforced: true
     columns:
       - name: product_key
         description: "Surrogate key for the product (MD5 hash)."
+        data_type: varchar
         data_tests:
           - unique
           - not_null
       - name: product_id
         description: "The primary key and natural key of the product."
+        data_type: varchar
         data_tests:
           - unique
           - not_null
       - name: base_currency
         description: "The base currency being traded (e.g., BTC)."
+        data_type: varchar
+        data_tests:
+          - not_null
       - name: quote_currency
         description: "The quote currency used for pricing (e.g., USD)."
+        data_type: varchar
+        data_tests:
+          - not_null
       - name: is_fiat_quote
         description: "Boolean indicating if the quote currency is a fiat currency."
+        data_type: boolean
+        data_tests:
+          - not_null

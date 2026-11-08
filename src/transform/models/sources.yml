@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: crypto_source
+    database: CRYPTO_DB
+    schema: PUBLIC
+    tables:
+      - name: raw_crypto_trades
+        description: "Bronze Layer: Raw, append-only Kafka trade stream ingested from Coinbase via Kafka Connect into Snowflake."
+        columns:
+          - name: record_content
+            description: "Raw JSON trade payload variant."
+            data_tests:
+              - not_null
+          - name: record_metadata
+            description: "Kafka offset, partition, and topic metadata variant."
+            data_tests:
+              - not_null

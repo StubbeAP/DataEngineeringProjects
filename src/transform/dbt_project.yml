@@ -22,9 +22,12 @@ models:
       +materialized: view
       stg_crypto_trades:
         +materialized: view
+    intermediate:
+      +materialized: view
     marts:
       +materialized: incremental
       +incremental_strategy: merge
+      +on_schema_change: fail
       +unique_key: trade_id
       dim_products:
         +materialized: table
@@ -32,12 +35,15 @@ models:
         +materialized: table
       fct_crypto_trades:
         +materialized: incremental
+        +on_schema_change: fail
     streaming:
       +materialized: incremental
       +incremental_strategy: append
+      +on_schema_change: fail
       hourly_crypto_summary:
         +materialized: incremental
         +incremental_strategy: merge
+        +on_schema_change: fail
         +unique_key:
           - hourly_window
           - product_id

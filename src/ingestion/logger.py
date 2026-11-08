@@ -2,6 +2,7 @@ import logging
 import sys
 
 def get_logger(name: str) -> logging.Logger:
+    """Return a configured logger instance."""
     logger = logging.getLogger(name)
     if not logger.handlers:
         logger.setLevel(logging.INFO)
