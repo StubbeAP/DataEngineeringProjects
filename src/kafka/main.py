@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -18,8 +19,11 @@ def main():
     kafka_config = config['kafka']
     cb_config = config['coinbase']
 
+    # Prefer environment variable (used by Docker container), fallback to config yaml (host runner)
+    bootstrap_servers = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', kafka_config['bootstrap.servers'])
+
     producer = CryptoKafkaProducer(
-        bootstrap_servers=kafka_config['bootstrap.servers'],
+        bootstrap_servers=bootstrap_servers,
         client_id=kafka_config['client.id'],
         topic=kafka_config['topic']
     )

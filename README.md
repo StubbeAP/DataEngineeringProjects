@@ -91,12 +91,13 @@ make kafka-up
 ```
 *(The Snowflake Sink Connector is automatically registered by an init container upon startup).*
 
-Start the live Coinbase trade producer:
+Start the live Coinbase trade producer container:
 ```bash
 make producer
 ```
+*(Runs `kafka-producer` in Docker and streams live trade logs. Press `Ctrl + C` anytime to exit logs while container runs in background).*
 
-Stop Kafka containers:
+Stop Kafka & Producer containers:
 ```bash
 make kafka-down
 ```

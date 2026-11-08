@@ -108,6 +108,21 @@ services:
       kafka-connect:
         condition: service_healthy
 
+  kafka-producer:
+    image: dataengineeringprojects-airflow:latest
+    container_name: crypto-kafka-producer
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      PYTHONPATH: /opt/project
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - .:/opt/project
+    working_dir: /opt/project
+    command: python src/kafka/main.py
+
   # =========================================================================
   # AIRFLOW ORCHESTRATION INFRASTRUCTURE (LOCALEXECUTOR)
   # =========================================================================

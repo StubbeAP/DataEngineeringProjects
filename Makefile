@@ -1,5 +1,7 @@
-.PHONY: up down kafka-up kafka-down airflow-up airflow-down airflow-logs producer consumer extract-api register-connector test lint clean dbt-run dbt-test kill-airflow
+.PHONY: up down kafka-up kafka-down airflow-up airflow-down airflow-logs producer producer-logs consumer extract-api register-connector test lint clean dbt-run dbt-test kill-airflow
 
+# Auto-detect local virtualenv; fallback to python3 if not found
+PYTHON ?= $(shell if [ -f ./venv/bin/python ]; then echo ./venv/bin/python; else echo python3; fi)
 DOCKER_COMPOSE ?= docker compose
 
 # ---------------------------------------------------------------------------
@@ -14,7 +16,7 @@ kafka-up:
 	$(DOCKER_COMPOSE) up -d kafka kafka-connect kafka-connect-init kafka-ui
 
 kafka-down:
-	$(DOCKER_COMPOSE) stop kafka-ui kafka-connect kafka
+	$(DOCKER_COMPOSE) stop kafka-producer kafka-ui kafka-connect kafka
 
 airflow-up:
 	$(DOCKER_COMPOSE) up -d postgres airflow-init airflow-webserver airflow-scheduler
@@ -29,13 +31,18 @@ airflow-logs:
 # Data Ingestion
 # ---------------------------------------------------------------------------
 producer:
-	python src/kafka/main.py
+	$(DOCKER_COMPOSE) up -d kafka-producer
+	@echo "Kafka producer container started. Streaming live trades from Coinbase..."
+	$(DOCKER_COMPOSE) logs -f kafka-producer
+
+producer-logs:
+	$(DOCKER_COMPOSE) logs -f kafka-producer
 
 consumer:
-	python src/kafka/kafka_consumer.py
+	$(PYTHON) src/kafka/kafka_consumer.py
 
 extract-api:
-	python src/kafka/api_extractor.py
+	$(PYTHON) src/kafka/api_extractor.py
 
 register-connector:
 	curl -X POST -H "Content-Type: application/json" --data @config/connect/snowflake_connector.json http://localhost:8083/connectors
