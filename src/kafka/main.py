@@ -4,10 +4,10 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-from src.ingestion.config import load_config
-from src.ingestion.logger import get_logger
-from src.ingestion.kafka_producer import CryptoKafkaProducer
-from src.ingestion.websocket_client import CoinbaseWebsocketClient
+from src.kafka.config import load_config
+from src.kafka.logger import get_logger
+from src.kafka.kafka_producer import CryptoKafkaProducer
+from src.kafka.websocket_client import CoinbaseWebsocketClient
 
 logger = get_logger(__name__)
 

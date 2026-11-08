@@ -1,6 +1,6 @@
 import json
 from confluent_kafka import Producer
-from src.ingestion.logger import get_logger
+from src.kafka.logger import get_logger
 
 logger = get_logger(__name__)
 

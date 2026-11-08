@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Optional
 import duckdb
 from confluent_kafka import Consumer, KafkaError
-from src.ingestion.config import load_config
-from src.ingestion.logger import get_logger
+from src.kafka.config import load_config
+from src.kafka.logger import get_logger
 
 logger = get_logger(__name__)
 

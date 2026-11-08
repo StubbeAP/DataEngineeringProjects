@@ -24,13 +24,13 @@ airflow-logs:
 # Data Ingestion
 # ---------------------------------------------------------------------------
 producer:
-	python src/ingestion/main.py
+	python src/kafka/main.py
 
 consumer:
-	python src/ingestion/kafka_consumer.py
+	python src/kafka/kafka_consumer.py
 
 extract-api:
-	python src/ingestion/api_extractor.py
+	python src/kafka/api_extractor.py
 
 register-connector:
 	curl -X POST -H "Content-Type: application/json" --data @config/connect/snowflake_connector.json http://localhost:8083/connectors

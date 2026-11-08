@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock
-from src.ingestion.websocket_client import CoinbaseWebsocketClient
+from src.kafka.websocket_client import CoinbaseWebsocketClient
 
 def test_websocket_on_message_match():
     # Mock producer

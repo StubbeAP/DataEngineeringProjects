@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from src.ingestion.websocket_client import TradePayload
+from src.kafka.websocket_client import TradePayload
 
 def test_valid_payload():
     data = {

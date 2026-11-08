@@ -3,8 +3,8 @@ import time
 from datetime import datetime, timezone
 import websocket
 from pydantic import BaseModel, ValidationError
-from src.ingestion.logger import get_logger
-from src.ingestion.kafka_producer import CryptoKafkaProducer
+from src.kafka.logger import get_logger
+from src.kafka.kafka_producer import CryptoKafkaProducer
 
 logger = get_logger(__name__)
 

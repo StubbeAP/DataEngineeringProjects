@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 import duckdb
-from src.ingestion.logger import get_logger
+from src.kafka.logger import get_logger
 
 logger = get_logger(__name__)
 
