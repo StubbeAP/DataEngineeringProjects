@@ -15,16 +15,14 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
-# Configuring models by folder and explicit model names
+# Configuring models by Medallion architecture (bronze, silver, gold)
 models:
   crypto_snowflake_pipeline:
-    staging:
+    bronze:
       +materialized: view
       stg_crypto_trades:
         +materialized: view
-    intermediate:
-      +materialized: view
-    marts:
+    silver:
       +materialized: incremental
       +incremental_strategy: merge
       +on_schema_change: fail
@@ -36,10 +34,8 @@ models:
       fct_crypto_trades:
         +materialized: incremental
         +on_schema_change: fail
-    streaming:
+    gold:
       +materialized: incremental
-      +incremental_strategy: append
-      +on_schema_change: fail
       hourly_crypto_summary:
         +materialized: incremental
         +incremental_strategy: merge
