@@ -85,19 +85,15 @@ pip install -r requirements.txt
 
 ## Starting Kafka
 
-Start the Kafka stack (Broker, Kafka Connect, Kafka UI):
+Start the Kafka stack (Broker, Kafka Connect, Auto-Connector-Init, Kafka UI):
 ```bash
 make kafka-up
 ```
+*(The Snowflake Sink Connector is automatically registered by an init container upon startup).*
 
 Start the live Coinbase trade producer:
 ```bash
 make producer
-```
-
-Register the Snowflake Kafka Connector:
-```bash
-make register-connector
 ```
 
 Stop Kafka containers:

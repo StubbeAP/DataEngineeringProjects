@@ -70,6 +70,30 @@ services:
       timeout: 5s
       retries: 10
 
+  kafka-connect-init:
+    image: curlimages/curl:8.7.1
+    container_name: crypto-kafka-connect-init
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+    volumes:
+      - ./config/connect:/config:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Kafka Connect cluster to stabilize..."
+        sleep 5
+        echo "Registering / updating Snowflake Sink Connector..."
+        curl -s -f -X PUT \
+          -H "Content-Type: application/json" \
+          --data @/config/snowflake_connector.json \
+          http://kafka-connect:8083/connectors/snowflake-sink-connector/config || \
+        curl -s -f -X POST \
+          -H "Content-Type: application/json" \
+          --data @/config/snowflake_connector.json \
+          http://kafka-connect:8083/connectors
+        echo "Connector setup completed."
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: crypto-kafka-ui

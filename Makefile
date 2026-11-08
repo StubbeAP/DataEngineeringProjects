@@ -11,7 +11,7 @@ down:
 	$(DOCKER_COMPOSE) down -v
 
 kafka-up:
-	$(DOCKER_COMPOSE) up -d kafka kafka-connect kafka-ui
+	$(DOCKER_COMPOSE) up -d kafka kafka-connect kafka-connect-init kafka-ui
 
 kafka-down:
 	$(DOCKER_COMPOSE) stop kafka-ui kafka-connect kafka
