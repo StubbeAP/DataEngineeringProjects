@@ -33,7 +33,7 @@ extract-api:
 	python src/ingestion/api_extractor.py
 
 register-connector:
-	curl -X POST -H "Content-Type: application/json" --data @config/kafka_connect_snowflake.json http://localhost:8083/connectors
+	curl -X POST -H "Content-Type: application/json" --data @config/connect/snowflake_connector.json http://localhost:8083/connectors
 
 # ---------------------------------------------------------------------------
 # dbt Transformations

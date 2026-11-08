@@ -11,3 +11,4 @@ coinbase:
     - 'SOL-USD'
   channels:
     - 'matches'
+
